@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Provisioning.Client;
+using Microsoft.Azure.Devices.Provisioning.Client.Transport;
 using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -25,6 +27,10 @@ namespace Thermostat
     {
         // DTDL interface used: https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/samples/Thermostat.json
         private const string ModelId = "dtmi:com:example:Thermostat;1";
+
+        private const string IdScope = "<ID Scope>";
+        private const string RegistrationId = "<registration id>";
+        private const string PrimaryKey = "<primary key>";
 
         private static readonly string s_deviceConnectionString = Environment.GetEnvironmentVariable("IOTHUB_DEVICE_CONNECTION_STRING");
         private static readonly Random s_random = new Random();
@@ -66,7 +72,12 @@ namespace Thermostat
             // -> Send "maxTempSinceLastReboot" over property update, when a new max temperature is set.
 
             s_logger.LogDebug($"Initialize the device client.");
-            InitializeDeviceClientAsync();
+            s_deviceClient = await CreateFromDPSSasAndModelIdAsync(
+                IdScope,
+                RegistrationId,
+                PrimaryKey,
+                ModelId,
+                s_logger);
 
             s_logger.LogDebug($"Set handler to receive \"targetTemperature\" updates.");
             await s_deviceClient.SetDesiredPropertyUpdateCallbackAsync(TargetTemperatureUpdateCallbackAsync, s_deviceClient);
@@ -216,6 +227,61 @@ namespace Thermostat
         private static (bool, T) GetPropertyFromTwin<T>(TwinCollection collection, string propertyName)
         {
             return collection.Contains(propertyName) ? (true, (T)collection[propertyName]) : (false, default);
+        }
+
+        static async Task<DeviceClient> CreateFromDPSSasAndModelIdAsync(string scopeId, string deviceId, string sas, string modelId, ILogger logger)
+        {
+            var dc = await ProvisionDeviceWithSasKeyAsync(scopeId, deviceId, sas, modelId, logger);
+            return dc;
+        }
+
+        internal static async Task<DeviceClient> ProvisionDeviceWithSasKeyAsync(string scopeId, string deviceId, string deviceKey, string modelId, ILogger log)
+        {
+            using (var transport = new ProvisioningTransportHandlerMqtt())
+            {
+                using (var security = new SecurityProviderSymmetricKey(deviceId, deviceKey, null))
+                {
+                    DeviceRegistrationResult provResult;
+                    var provClient = ProvisioningDeviceClient.Create("global.azure-devices-provisioning.net", scopeId, security, transport);
+
+                    if (!string.IsNullOrEmpty(modelId))
+                    {
+                        provResult = await provClient.RegisterAsync(GetProvisionPayload(modelId)).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        provResult = await provClient.RegisterAsync().ConfigureAwait(false);
+                    }
+
+                    log.LogInformation($"Provioning Result. Status [{provResult.Status}] SubStatus [{provResult.Substatus}]");
+
+                    if (provResult.Status == ProvisioningRegistrationStatusType.Assigned)
+                    {
+                        log.LogWarning($"Device {provResult.DeviceId} in Hub {provResult.AssignedHub}");
+                        log.LogInformation($"LastRefresh {provResult.LastUpdatedDateTimeUtc} RegistrationId {provResult.RegistrationId}");
+                        var csBuilder = IotHubConnectionStringBuilder.Create(provResult.AssignedHub, new DeviceAuthenticationWithRegistrySymmetricKey(provResult.DeviceId, security.GetPrimaryKey()));
+                        string connectionString = csBuilder.ToString();
+                        return await Task.FromResult(
+                          DeviceClient.CreateFromConnectionString(
+                            connectionString, TransportType.Mqtt,
+                              new ClientOptions() { ModelId = modelId }));
+                    }
+                    else
+                    {
+                        string errorMessage = $"Device not provisioned. Message: {provResult.ErrorMessage}";
+                        log.LogError(errorMessage);
+                        throw new ApplicationException(errorMessage);
+                    }
+                }
+            }
+        }
+
+        static ProvisioningRegistrationAdditionalData GetProvisionPayload(string modelId)
+        {
+            return new ProvisioningRegistrationAdditionalData
+            {
+                JsonData = "{ modelId: '" + modelId + "'}"
+            };
         }
     }
 }
