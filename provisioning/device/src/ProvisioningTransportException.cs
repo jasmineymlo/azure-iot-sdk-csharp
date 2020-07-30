@@ -24,6 +24,11 @@ namespace Microsoft.Azure.Devices.Provisioning.Client
         public string TrackingId { get; set; }
 
         /// <summary>
+        /// Service reported Error details. Use this when reporting a Service issue.
+        /// </summary>
+        public ProvisioningErrorDetails ErrorDetails { get; private set; }
+
+        /// <summary>
         /// Creates a new instance of the ProvisioningTransportException class.
         /// </summary>
         public ProvisioningTransportException()
@@ -79,8 +84,22 @@ namespace Microsoft.Azure.Devices.Provisioning.Client
         public ProvisioningTransportException(string message, Exception innerException, bool isTransient, string trackingId)
             : base(message, innerException)
         {
+            IsTransient = isTransient;
+            TrackingId = trackingId;
+        }
+
+        /// <summary>
+        /// Creates a new instance of the ProvisioningTransportException class.
+        /// </summary>
+        /// <param name="message">The exception message.</param>
+        /// <param name="isTransient">True if the error is transient.</param>
+        /// <param name="errorDetails">The service error details.</param>
+        /// <param name="innerException">The inner exception.</param>
+        public ProvisioningTransportException(string message, Exception innerException, bool isTransient, ProvisioningErrorDetails errorDetails)
+            : base(message, innerException)
+        {
             this.IsTransient = isTransient;
-            this.TrackingId = trackingId;
+            this.ErrorDetails = errorDetails;
         }
 
         /// <summary>
@@ -93,8 +112,8 @@ namespace Microsoft.Azure.Devices.Provisioning.Client
         {
             if (info != null)
             {
-                this.IsTransient = info.GetBoolean(IsTransientValueSerializationStoreName);
-                this.TrackingId = info.GetString(IsTransientValueSerializationStoreName);
+                IsTransient = info.GetBoolean(IsTransientValueSerializationStoreName);
+                TrackingId = info.GetString(IsTransientValueSerializationStoreName);
             }
         }
 

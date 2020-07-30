@@ -27,11 +27,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service
     /// }
     /// </code>
     /// </example>
-    /// <seealso cref="https://www.trustedcomputinggroup.org/wp-content/uploads/Device-Identifier-Composition-Engine-Rev69_Public-Review.pdf">Device Identifier Composition Engine (DICE) spec</seealso>
-    /// <seealso cref="https://www.microsoft.com/en-us/research/publication/riot-a-foundation-for-trust-in-the-internet-of-things">RIoT – A Foundation for Trust in the Internet of Things</seealso>
-    /// <seealso cref="https://docs.microsoft.com/en-us/rest/api/iot-dps/deviceenrollment">Device Enrollment</seealso>
-    /// <seealso cref="https://docs.microsoft.com/en-us/rest/api/iot-dps/deviceenrollmentgroup">Device Enrollment Group</seealso>
-    public class X509CertificateInfo
+     public class X509CertificateInfo
     {
         /// <summary>
         /// CONSTRUCTOR
@@ -56,19 +52,6 @@ namespace Microsoft.Azure.Devices.Provisioning.Service
             string issuerName, DateTime? notBeforeUtc, DateTime? notAfterUtc, string serialNumber, int? version)
         {
             /* SRS_X509_CERTIFICATE_INFO_21_001: [The X509CertificateInfo shall provide means to deserialization.] */
-            try
-            {
-                ParserUtils.EnsureUTF8String(subjectName);
-                ParserUtils.EnsureUTF8String(sha1Thumbprint);
-                ParserUtils.EnsureUTF8String(sha256Thumbprint);
-                ParserUtils.EnsureUTF8String(issuerName);
-                ParserUtils.EnsureUTF8String(serialNumber);
-            }
-            catch (ArgumentException e)
-            {
-                throw new ProvisioningServiceClientException(e);
-            }
-
             if ((notBeforeUtc == null) || (notAfterUtc == null) || (version == null))
             {
                 throw new ProvisioningServiceClientException("DateTime cannot be null");

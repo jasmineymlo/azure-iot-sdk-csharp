@@ -13,6 +13,8 @@
 *.user
 *.sln.docstates
 .vs/
+launchSettings.json
+*.pubxml
 
 # Build results
 
@@ -57,6 +59,7 @@ BundleArtifacts/
 *.log
 *.scc
 *.bak
+*.etl
 
 # Visual C++ cache files
 ipch/
@@ -216,3 +219,12 @@ project.lock.json
 
 # TPM simulator NVRAM
 NVChip
+
+#Config files
+**/iotConfig.cmd
+**iotPowershellConfig.ps1
+
+#Certificate files
+*.p7b
+*.pfx
+*.cer

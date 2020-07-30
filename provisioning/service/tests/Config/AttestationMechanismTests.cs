@@ -5,10 +5,12 @@ using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class AttestationMechanismTests
     {
         private const string SampleEndorsementKey = "AToAAQALAAMAsgAgg3GXZ0SEs/gakMyNRqXXJP1S124GUgtk8qHaGzMUaaoABgCAAEMAEAgAAAAAAAEAxsj" +
@@ -69,8 +71,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_ATTESTATION_MECHANISM_21_001: [The constructor shall throw ArgumentNullException if the provided attestation is null.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_Constructor_ThrowsOnAttestationNull()
+        public void AttestationMechanismConstructorThrowsOnAttestationNull()
         {
             // arrange - act - assert
             TestAssert.Throws<ArgumentNullException>(() => new AttestationMechanism(null));
@@ -81,8 +82,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_ATTESTATION_MECHANISM_21_004: [If the provided attestation is instance of TpmAttestation, the constructor shall set the x508 as null.] */
         /* SRS_ATTESTATION_MECHANISM_21_010: [If the type is `TPM`, the getAttestation shall return the stored TpmAttestation.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_Constructor_SucceedOnTPMAttestation()
+        public void AttestationMechanismConstructorSucceedOnTPMAttestation()
         {
             // arrange - act
             AttestationMechanism attestationMechanism = new AttestationMechanism(SampleTpmAttestation);
@@ -95,8 +95,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_ATTESTATION_MECHANISM_21_005: [The constructor shall throw ArgumentException if the provided attestation is unknown.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_Constructor_ThrowsOnUnknownAttestation()
+        public void AttestationMechanismConstructorThrowsOnUnknownAttestation()
         {
             // arrange
             UnknownAttestation unknownAttestation = new UnknownAttestation();
@@ -110,8 +109,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_ATTESTATION_MECHANISM_21_008: [If the provided attestation is instance of X509Attestation, the constructor shall set the TPM as null.] */
         /* SRS_ATTESTATION_MECHANISM_21_011: [If the type is `X509`, the getAttestation shall return the stored X509Attestation.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_Constructor_SucceedOnX509Attestation()
+        public void AttestationMechanismConstructorSucceedOnX509Attestation()
         {
             // arrange - act
             AttestationMechanism attestationMechanism = new AttestationMechanism(SampleX509RootAttestation);
@@ -128,8 +126,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_ATTESTATION_MECHANISM_21_013: [The constructor shall throw ProvisioningServiceClientException if the provided AttestationMechanismType 
                                                 is `TPM` but the TPM attestation is null.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_ConstructorJSON_ThrowsOnTypeTPMWithX509Attestation()
+        public void AttestationMechanismConstructorJSONThrowsOnTypeTPMWithX509Attestation()
         {
             // arrange
             string invalidJson =
@@ -159,8 +156,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_ATTESTATION_MECHANISM_21_014: [If the provided AttestationMechanismType is `TPM`, the constructor shall store the provided TPM attestation.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_ConstructorJSON_SucceedForTPM()
+        public void AttestationMechanismConstructorJSONSucceedForTPM()
         {
             // arrange
             AttestationMechanism attestationMechanism = JsonConvert.DeserializeObject<AttestationMechanism>(SampleTpmAttestationJson);
@@ -174,8 +170,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_ATTESTATION_MECHANISM_21_015: [The constructor shall throw ProvisioningServiceClientException if the provided 
                                              AttestationMechanismType is `x509` but the x509 attestation is null.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_ConstructorJSON_ThrowsOnTypeX509WithTPMAttestation()
+        public void AttestationMechanismConstructorJSONThrowsOnTypeX509WithTPMAttestation()
         {
             // arrange
             string invalidJson =
@@ -193,8 +188,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_ATTESTATION_MECHANISM_21_016: [If the provided AttestationMechanismType is `x509`, the constructor shall store the provided x509 attestation.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_ConstructorJSON_SucceedForX509()
+        public void AttestationMechanismConstructorJSONSucceedForX509()
         {
             // arrange
             AttestationMechanism attestationMechanism = JsonConvert.DeserializeObject<AttestationMechanism>(SampleX509AttestationJson);
@@ -205,14 +199,11 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
             Assert.IsTrue(attestationMechanism.GetAttestation() is X509Attestation);
         }
 
-        /* SRS_ATTESTATION_MECHANISM_21_017: [The constructor shall throw ProvisioningServiceClientException if the provided 
-                                            AttestationMechanismType is not `TPM` or `x509`.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void AttestationMechanism_ConstructorJSON_ThrowsOnNoneType()
+        public void AttestationMechanismConstructorJSONSucceedOnNoneType()
         {
             // arrange
-            string invalidJsonMissingEtag =
+            string typeNoneJson =
             "{\n" +
             "   \"type\":\"none\",\n" +
             "   \"tpm\":{\n" +
@@ -221,9 +212,36 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
             "}";
 
             // act - assert
-            TestAssert.Throws<ProvisioningServiceClientException>(() => JsonConvert.DeserializeObject<AttestationMechanism>(invalidJsonMissingEtag));
+            Assert.IsNotNull(JsonConvert.DeserializeObject<AttestationMechanism>(typeNoneJson));
         }
 
+        [TestMethod]
+        public void AttestationMechanismConstructorJSONSucceedOnSymmetricKeyType()
+        {
+            // arrange
+            string samplePrimaryKey = Convert.ToBase64String(Encoding.UTF8.GetBytes("000000000000000000"));
+            string sampleSecondaryKey = Convert.ToBase64String(Encoding.UTF8.GetBytes("111111111111111111"));
+            string symmetricKeyJson =
+            "{\n" +
+            "   \"type\":\"symmetricKey\",\n" +
+            "   \"symmetricKey\":{\n" +
+            "       \"primaryKey\":\"" + samplePrimaryKey + "\",\n" +
+            "       \"secondaryKey\":\"" + sampleSecondaryKey + "\"\n" +
+            "   }\n" +
+            "}";
+
+            // act
+            AttestationMechanism attestationMechanism = JsonConvert.DeserializeObject<AttestationMechanism>(symmetricKeyJson);
+            
+            //assert
+            Assert.IsNotNull(attestationMechanism);
+            Assert.IsTrue(attestationMechanism.Type == AttestationMechanismType.SymmetricKey);
+            Assert.IsTrue(attestationMechanism.GetAttestation() is SymmetricKeyAttestation);
+            SymmetricKeyAttestation symmetricKeyAttestation = (SymmetricKeyAttestation) attestationMechanism.GetAttestation();
+
+            Assert.AreEqual(samplePrimaryKey, symmetricKeyAttestation.PrimaryKey);
+            Assert.AreEqual(sampleSecondaryKey, symmetricKeyAttestation.SecondaryKey);
+        }
 
     }
 }

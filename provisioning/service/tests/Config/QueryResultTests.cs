@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class QueryResultTests
     {
         private const string SerializedNameUnknown = "unknown";
@@ -156,8 +157,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_QUERY_RESULT_21_002: [The constructor shall throw ArgumentException if the provided body is null or empty and the type is not `unknown`.] */
         /* SRS_QUERY_RESULT_21_003: [The constructor shall throw JsonSerializationException if the JSON is invalid.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_ThrowsOnInvalidParameters()
+        public void QueryResultConstructorThrowsOnInvalidParameters()
         {
             // arrange - act - assert
             TestAssert.Throws<ArgumentException>(() => new QueryResult(null, SampleListIntJSON, SampleContinuationToken));
@@ -171,8 +171,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_QUERY_RESULT_21_004: [If the type is `enrollment`, the constructor shall parse the body as IndividualEnrollment[].] */
         /* SRS_QUERY_RESULT_21_011: [The constructor shall store the provided parameters `type` and `continuationToken`.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnIndividualEnrollment()
+        public void QueryResultConstructorSucceedOnIndividualEnrollment()
         {
             // arrange - act
             QueryResult queryResult = new QueryResult(SerializedNameEnrollment, SampleEnrollmentsJSON, SampleContinuationToken);
@@ -188,8 +187,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_005: [If the type is `enrollmentGroup`, the constructor shall parse the body as EnrollmentGroup[].] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnEnrollmentGroup()
+        public void QueryResultConstructorSucceedOnEnrollmentGroup()
         {
             // arrange - act
             QueryResult queryResult = new QueryResult(SerializedNameEnrollmentGroup, SampleEnrollmentGroupJSON, SampleContinuationToken);
@@ -205,8 +203,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_006: [If the type is `deviceRegistration`, the constructor shall parse the body as DeviceRegistrationState[].] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnDeviceRegistration()
+        public void QueryResultConstructorSucceedOnDeviceRegistration()
         {
             // arrange - act
             QueryResult queryResult = new QueryResult(SerializedNameDeviceRegistration, SampleRegistrationStatusJSON, SampleContinuationToken);
@@ -222,8 +219,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_007: [If the type is `unknown`, and the body is null, the constructor shall set `items` as null.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnUnknownWithNullBody()
+        public void QueryResultConstructorSucceedOnUnknownWithNullBody()
         {
             // arrange - act
             QueryResult queryResult = new QueryResult(SerializedNameUnknown, null, SampleContinuationToken);
@@ -237,8 +233,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_008: [If the type is `unknown`, the constructor shall try to parse the body as JObject[].] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnUnknownWithObjectListBody()
+        public void QueryResultConstructorSucceedOnUnknownWithObjectListBody()
         {
             // arrange - act
             QueryResult queryResult = new QueryResult(SerializedNameUnknown, SampleListJObjectJSON, SampleContinuationToken);
@@ -254,8 +249,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_009: [If the type is `unknown`, the constructor shall try to parse the body as Object[].] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnUnknownWithIntegerListBody()
+        public void QueryResultConstructorSucceedOnUnknownWithIntegerListBody()
         {
             // arrange - act
             QueryResult queryResult = new QueryResult(SerializedNameUnknown, SampleListIntJSON, SampleContinuationToken);
@@ -271,8 +265,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_010: [If the type is `unknown`, and the constructor failed to parse the body as JObject[] and Object[], it shall return the body as a single string in the items.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnUnknownWithStringBody()
+        public void QueryResultConstructorSucceedOnUnknownWithStringBody()
         {
             // arrange
             string body = "This is a non deserializable body";
@@ -291,8 +284,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_QUERY_RESULT_21_011: [The constructor shall store the provided parameters `type` and `continuationToken`.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnNullContinuationToken()
+        public void QueryResultConstructorSucceedOnNullContinuationToken()
         {
             // arrange
             string body = "This is a non deserializable body";
@@ -306,8 +298,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void QueryResult_Constructor_SucceedOnEmptyContinuationToken()
+        public void QueryResultConstructorSucceedOnEmptyContinuationToken()
         {
             // arrange
             string body = "This is a non deserializable body";

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class BulkEnrollmentOperationResultTests
     {
         private const string SampleRegistrationId = "valid-registration-id";
@@ -22,8 +23,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_BULK_ENROLLMENT_OPERATION_RESULT_21_001: [The BulkEnrollmentOperationResult shall throws JsonSerializationException if the 
                                             provided registrationId is null, empty, or invalid.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperationResult_Constructor_ThrowsOnInvalidParameters()
+        public void BulkEnrollmentOperationResultConstructorThrowsOnInvalidParameters()
         {
             // arrange
             string nonRegistrationId = 
@@ -48,8 +48,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_BULK_ENROLLMENT_OPERATION_RESULT_21_002: [The BulkEnrollmentOperationResult shall store the provided information.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperationResult_Constructor_Succeed()
+        public void BulkEnrollmentOperationResultConstructorSucceed()
         {
             // arrange
             string validJson = 

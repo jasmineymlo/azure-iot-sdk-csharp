@@ -1,0 +1,118 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">netstandard2.1;netstandard2.0;net472;net451</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">netstandard2.1;netstandard2.0</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
+    <!-- TODO #176: Enable warnings as errors. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RootNamespace>Microsoft.Azure.Devices.Client</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <OutputPath>.\bin\$(Configuration)</OutputPath>
+    <DocumentationFile>$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+
+    <!-- Don't auto-compile platform specific files: -->
+    <DefaultItemExcludes>ModernDotNet/**;net451/**;$(DefaultItemExcludes)</DefaultItemExcludes>
+
+    <RootDir>$(MSBuildProjectDirectory)\..\..\..</RootDir>
+  </PropertyGroup>
+
+  <!-- delay sign the assembly for Release build -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' AND '$(AZURE_IOT_DONOTSIGN.ToUpper())' != 'TRUE' ">
+    <AssemblyOriginatorKeyFile>$(RootDir)\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>1.27.0</Version>
+    <Title>Microsoft Azure IoT Device Client SDK</Title>
+    <IncludeSource>True</IncludeSource>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Authors>Microsoft</Authors>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Description>Device SDK for Azure IoT Hub</Description>
+    <PackageIcon>nugetIcon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/Azure/azure-iot-sdk-csharp</PackageProjectUrl>
+    <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <PackageTags>IoT Microsoft Azure IoTHub Device Client .NET AMQP MQTT HTTP</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(RootDir)\LICENSE" Pack="true" PackagePath="" />
+    <None Include="$(RootDir)\shared\icons\nugetIcon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <common>$(RootDir)\common\src</common>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SupportsNetStandard20AndAbove Condition="'$(TargetFramework)' == 'netstandard2.1' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'net472'">true</SupportsNetStandard20AndAbove>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetty.Codecs.Mqtt" Version="0.6.0" />
+    <PackageReference Include="DotNetty.Handlers" Version="0.6.0" />
+    <PackageReference Include="Microsoft.Azure.Amqp" Version="2.4.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RootDir)\shared\src\Microsoft.Azure.Devices.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(Common)\Logging.Common.cs">
+      <Link>Common\Logging.Common.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+  <!-- Net451 -->
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
+    <Compile Include="$(Common)\DefaultWebProxySettings.cs" />
+    <Compile Include="net451\IotHubClientWebSocket.cs" />
+    <Compile Include="net451\Common\LegacyClientWebSocketTransport.cs" />
+    <Compile Include="net451\Common\IOThreadTimer.cs" />
+    <Compile Include="net451\Common\Interop\UnsafeNativeMethods.cs" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Net.Http" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.3" />
+    <PackageReference Include="Microsoft.Owin" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
+    <Reference Include="System.Web" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+  </ItemGroup>
+
+  <!-- NetStandard 2.1, NetStandard 2.0 and net472 -->
+  <ItemGroup Condition="'$(SupportsNetStandard20AndAbove)' == 'true'">
+    <Compile Include="$(Common)\DefaultWebProxySettings.cs" />
+    <Compile Include="ModernDotNet\Common\IOThreadTimerSlim.cs" />
+    <Compile Include="ModernDotNet\HsmAuthentication\Transport\HttpUdsMessageHandler.cs" />
+    <Compile Include="ModernDotNet\HsmAuthentication\Transport\HttpBufferedStream.cs" />
+    <Compile Include="ModernDotNet\HsmAuthentication\Transport\HttpRequestResponseSerializer.cs" />
+    <Compile Include="ModernDotNet\HsmAuthentication\Transport\UnixDomainSocketEndPoint.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SupportsNetStandard20AndAbove)' == 'true'">
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.4.1" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- FXCop -->
+    <PackageReference Condition=" '$(Configuration)' == 'Debug' " Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

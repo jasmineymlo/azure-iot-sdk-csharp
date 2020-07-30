@@ -3,7 +3,13 @@
 
 using Microsoft.Azure.Devices.Provisioning.Client.Transport.Models;
 using Microsoft.Azure.Devices.Shared;
+using Microsoft.Rest;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Globalization;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,6 +21,16 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
     public class ProvisioningTransportHandlerHttp : ProvisioningTransportHandler
     {
         private static readonly TimeSpan s_defaultOperationPoolingIntervalMilliseconds = TimeSpan.FromSeconds(2);
+        private const int DefaultHttpsPort = 443;
+
+        /// <summary>
+        /// Creates an instance of the ProvisioningTransportHandlerHttp class.
+        /// </summary>
+        public ProvisioningTransportHandlerHttp()
+        {
+            Port = DefaultHttpsPort;
+            Proxy = DefaultWebProxySettings.Instance;
+        }
 
         /// <summary>
         /// Registers a device described by the message.
@@ -27,6 +43,11 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
             CancellationToken cancellationToken)
         {
             if (Logging.IsEnabled) Logging.Enter(this, $"{nameof(ProvisioningTransportHandlerHttp)}.{nameof(RegisterAsync)}");
+
+            if (message == null)
+            {
+                throw new ArgumentNullException(nameof(message));
+            }
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -42,28 +63,55 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
                 {
                     authStrategy = new HttpAuthStrategyX509((SecurityProviderX509)message.Security);
                 }
+                else if (message.Security is SecurityProviderSymmetricKey)
+                {
+                    authStrategy = new HttpAuthStrategySymmetricKey((SecurityProviderSymmetricKey)message.Security);
+                }
                 else
                 {
                     if (Logging.IsEnabled) Logging.Error(this, $"Invalid {nameof(SecurityProvider)} type.");
                     throw new NotSupportedException(
-                        $"{nameof(message.Security)} must be of type {nameof(SecurityProviderTpm)} " +
-                        $"or {nameof(SecurityProviderX509)}");
+                        $"{nameof(message.Security)} must be of type {nameof(SecurityProviderTpm)}, " +
+                        $"{nameof(SecurityProviderX509)} or {nameof(SecurityProviderSymmetricKey)}");
                 }
 
                 if (Logging.IsEnabled) Logging.Associate(authStrategy, this);
 
-                var builder = new UriBuilder()
+                var builder = new UriBuilder
                 {
                     Scheme = Uri.UriSchemeHttps,
-                    Host = message.GlobalDeviceEndpoint
+                    Host = message.GlobalDeviceEndpoint,
+                    Port = Port,
                 };
 
-                DeviceProvisioningServiceRuntimeClient client = authStrategy.CreateClient(builder.Uri);
+                var httpClientHandler = new HttpClientHandler
+                {
+                    // Cannot specify a specific protocol here, as desired due to an error:
+                    //   ProvisioningDeviceClient_ValidRegistrationId_AmqpWithProxy_SymmetricKey_RegisterOk_GroupEnrollment failing for me with System.PlatformNotSupportedException: Operation is not supported on this platform.
+                    // When revisiting TLS12 work for DPS, we should figure out why. Perhaps the service needs to support it.
+
+                    //SslProtocols = TlsVersions.Preferred,
+                };
+
+                if (Proxy != DefaultWebProxySettings.Instance)
+                {
+                    httpClientHandler.UseProxy = (Proxy != null);
+                    httpClientHandler.Proxy = Proxy;
+                    if (Logging.IsEnabled)
+                    {
+                        Logging.Info(this, $"{nameof(RegisterAsync)} Setting HttpClientHandler.Proxy");
+                    }
+                }
+
+                DeviceProvisioningServiceRuntimeClient client = authStrategy.CreateClient(builder.Uri, httpClientHandler);
                 client.HttpClient.DefaultRequestHeaders.Add("User-Agent", message.ProductInfo);
                 if (Logging.IsEnabled) Logging.Info(this, $"Uri: {builder.Uri}; User-Agent: {message.ProductInfo}");
 
                 DeviceRegistration deviceRegistration = authStrategy.CreateDeviceRegistration();
-
+                if (message.Payload != null && message.Payload.Length > 0)
+                {
+                    deviceRegistration.Payload = new JRaw(message.Payload);
+                }
                 string registrationId = message.Security.GetRegistrationID();
 
                 RegistrationOperationStatus operation =
@@ -89,17 +137,58 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
                        string.CompareOrdinal(operation.Status, RegistrationOperationStatus.OperationStatusUnassigned) == 0)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    TimeSpan? serviceRecommendedDelay = operation.RetryAfter;
+                    if (serviceRecommendedDelay != null && serviceRecommendedDelay?.TotalSeconds < s_defaultOperationPoolingIntervalMilliseconds.TotalSeconds)
+                    {
+                        if (Logging.IsEnabled) Logging.Error(this, $"Service recommended unexpected retryAfter of {operation.RetryAfter?.TotalSeconds}, defaulting to delay of {s_defaultOperationPoolingIntervalMilliseconds.ToString()}", nameof(RegisterAsync));
+                        serviceRecommendedDelay = s_defaultOperationPoolingIntervalMilliseconds;
+                    }
 
-                    await Task.Delay(
-                        operation.RetryAfter ??
-                        s_defaultOperationPoolingIntervalMilliseconds).ConfigureAwait(false);
+                    await Task.Delay(serviceRecommendedDelay ?? RetryJitter.GenerateDelayWithJitterForRetry(s_defaultOperationPoolingIntervalMilliseconds)).ConfigureAwait(false);
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    operation = await client.RuntimeRegistration.OperationStatusLookupAsync(
+                    try
+                    {
+                        operation = await client.RuntimeRegistration.OperationStatusLookupAsync(
                         registrationId,
                         operationId,
                         message.IdScope).ConfigureAwait(false);
+                    }
+                    catch(HttpOperationException oe)
+                    {
+                        bool isTransient = oe.Response.StatusCode >= HttpStatusCode.InternalServerError
+                            || (int)oe.Response.StatusCode == 429;
+                        try
+                        {
+                            var errorDetails = JsonConvert.DeserializeObject<ProvisioningErrorDetailsHttp>(oe.Response.Content);
+                            if (isTransient)
+                            {
+                                serviceRecommendedDelay = errorDetails.RetryAfter;
+                            }
+                            else
+                            {
+                                if (Logging.IsEnabled) Logging.Error(
+                                   this,
+                                   $"{nameof(ProvisioningTransportHandlerHttp)} threw exception {oe}",
+                                   nameof(RegisterAsync));
+                                throw new ProvisioningTransportException(oe.Response.Content, oe, isTransient, errorDetails);
+                            }
+                        }
+                        catch (JsonException ex)
+                        {
+                            if (Logging.IsEnabled) Logging.Error(
+                                this,
+                                $"{nameof(ProvisioningTransportHandlerHttp)} server returned malformed error response." +
+                                $"Parsing error: {ex}. Server response: {oe.Response.Content}",
+                                nameof(RegisterAsync));
+
+                            throw new ProvisioningTransportException(
+                                $"HTTP transport exception: malformed server error message: '{oe.Response.Content}'",
+                                ex,
+                                false);
+                        }
+                    }
 
                     if (Logging.IsEnabled) Logging.OperationStatusLookup(
                         this,
@@ -119,15 +208,42 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
 
                 return ConvertToProvisioningRegistrationResult(operation.RegistrationState);
             }
-            // TODO: Catch only expected exceptions from HTTP and REST.
-            catch (Exception ex)
+            catch (HttpOperationException oe)
             {
                 if (Logging.IsEnabled) Logging.Error(
-                    this, 
-                    $"{nameof(ProvisioningTransportHandlerHttp)} threw exception {ex}", 
+                   this,
+                   $"{nameof(ProvisioningTransportHandlerHttp)} threw exception {oe}",
+                   nameof(RegisterAsync));
+
+                bool isTransient = oe.Response.StatusCode >= HttpStatusCode.InternalServerError
+                    || (int)oe.Response.StatusCode == 429;
+
+                try
+                {
+                    var errorDetails = JsonConvert.DeserializeObject<ProvisioningErrorDetailsHttp>(oe.Response.Content);
+                    throw new ProvisioningTransportException(oe.Response.Content, oe, isTransient, errorDetails);
+                }
+                catch (JsonException ex)
+                {
+                    if (Logging.IsEnabled) Logging.Error(
+                        this,
+                        $"{nameof(ProvisioningTransportHandlerHttp)} server returned malformed error response." +
+                        $"Parsing error: {ex}. Server response: {oe.Response.Content}",
+                        nameof(RegisterAsync));
+
+                    throw new ProvisioningTransportException(
+                        $"HTTP transport exception: malformed server error message: '{oe.Response.Content}'",
+                        ex,
+                        false);
+                }
+            }
+            catch (Exception ex) when (!(ex is ProvisioningTransportException))
+            {
+                if (Logging.IsEnabled) Logging.Error(
+                    this,
+                    $"{nameof(ProvisioningTransportHandlerHttp)} threw exception {ex}",
                     nameof(RegisterAsync));
 
-                // TODO: Extract trackingId from the exception.
                 throw new ProvisioningTransportException($"HTTP transport exception", ex, true);
             }
             finally
@@ -136,10 +252,13 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
             }
         }
 
-        private DeviceRegistrationResult ConvertToProvisioningRegistrationResult(Models.DeviceRegistrationResult result)
+        private static DeviceRegistrationResult ConvertToProvisioningRegistrationResult(Models.DeviceRegistrationResult result)
         {
             var status = ProvisioningRegistrationStatusType.Failed;
             Enum.TryParse(result.Status, true, out status);
+
+            var substatus = ProvisioningRegistrationSubstatusType.InitialAssignment;
+            Enum.TryParse(result.Substatus, true, out substatus);
 
             return new DeviceRegistrationResult(
                 result.RegistrationId,
@@ -147,11 +266,13 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
                 result.AssignedHub,
                 result.DeviceId,
                 status,
+                substatus,
                 result.GenerationId,
                 result.LastUpdatedDateTimeUtc,
                 result.ErrorCode == null ? 0 : (int)result.ErrorCode,
                 result.ErrorMessage,
-                result.Etag);
+                result.Etag,
+                result?.Payload?.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

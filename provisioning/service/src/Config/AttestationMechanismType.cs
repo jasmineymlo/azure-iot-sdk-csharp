@@ -10,7 +10,6 @@ namespace Microsoft.Azure.Devices.Provisioning.Service
     /// <summary>
     /// Type of Device Provisioning Service attestation mechanism.
     /// </summary>
-    /// <seealso cref="https://docs.microsoft.com/en-us/rest/api/iot-dps/deviceenrollment">Device Enrollment</seealso>
     [JsonConverter(typeof(StringEnumConverter))]
     internal enum AttestationMechanismType
     {
@@ -39,6 +38,15 @@ namespace Microsoft.Azure.Devices.Provisioning.Service
         /// Identify the attestation mechanism as <see cref="X509Attestation"/>.
         /// </remarks>
         [EnumMember(Value = "x509")]
-        X509 = 2
+        X509 = 2,
+
+        /// <summary>
+        /// Symmetric Key attestation mechanism
+        /// </summary>
+        /// <remarks>
+        /// Identify the attestation mechanism as <see cref="SymmetricKeyAttestation"/>
+        /// </remarks>
+        [EnumMember(Value = "symmetricKey")]
+        SymmetricKey = 3
     }
 }

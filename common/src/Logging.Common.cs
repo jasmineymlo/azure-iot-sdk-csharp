@@ -19,6 +19,7 @@ namespace Microsoft.Azure.Devices.Shared
         public static readonly Logging Log = new Logging();
 
         #region Metadata
+
         public static class Keywords
         {
             public const EventKeywords Default = (EventKeywords)0x0001;
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Devices.Shared
 
         // Common event reservations: [1, 10)
         private const int EnterEventId = 1;
+
         private const int ExitEventId = 2;
         private const int AssociateEventId = 3;
         private const int InfoEventId = 4;
@@ -40,11 +42,19 @@ namespace Microsoft.Azure.Devices.Shared
 
         private const string MissingMember = "(?)";
         private const string NullInstance = "(null)";
-        private const string NoParameters = "";
         private const int MaxDumpSize = 1024;
-        #endregion
+#if !NET451
+        private const string NoParameters = "";
+#endif
+
+        #endregion Metadata
+
         #region Events
+
         #region Enter
+
+#if !NET451
+
         /// <summary>Logs entrance to a method.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="formattableString">A description of the entrance, including any arguments to the call.</param>
@@ -56,6 +66,8 @@ namespace Microsoft.Azure.Devices.Shared
             DebugValidateArg(formattableString);
             if (IsEnabled) Log.Enter(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
         }
+
+#endif
 
         /// <summary>Logs entrance to a method.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
@@ -102,9 +114,13 @@ namespace Microsoft.Azure.Devices.Shared
         [Event(EnterEventId, Level = EventLevel.Informational, Keywords = Keywords.EnterExit)]
         private void Enter(string thisOrContextObject, string memberName, string parameters) =>
             WriteEvent(EnterEventId, thisOrContextObject, memberName ?? MissingMember, parameters);
-        #endregion
+
+        #endregion Enter
 
         #region Exit
+
+#if !NET451
+
         /// <summary>Logs exit from a method.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="formattableString">A description of the exit operation, including any return values.</param>
@@ -116,6 +132,8 @@ namespace Microsoft.Azure.Devices.Shared
             DebugValidateArg(formattableString);
             if (IsEnabled) Log.Exit(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
         }
+
+#endif
 
         /// <summary>Logs exit from a method.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
@@ -143,12 +161,32 @@ namespace Microsoft.Azure.Devices.Shared
             if (IsEnabled) Log.Exit(IdOf(thisOrContextObject), memberName, $"{Format(arg0)}, {Format(arg1)}");
         }
 
+        /// <summary>Logs exit to a method.</summary>
+        /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
+        /// <param name="arg0">The first object to log.</param>
+        /// <param name="arg1">The second object to log.</param>
+        /// <param name="arg2">The third object to log.</param>
+        /// <param name="memberName">The calling member.</param>
+        [NonEvent]
+        public static void Exit(object thisOrContextObject, object arg0, object arg1, object arg2, [CallerMemberName] string memberName = null)
+        {
+            DebugValidateArg(thisOrContextObject);
+            DebugValidateArg(arg0);
+            DebugValidateArg(arg1);
+            DebugValidateArg(arg2);
+            if (IsEnabled) Log.Exit(IdOf(thisOrContextObject), memberName, $"({Format(arg0)}, {Format(arg1)}, {Format(arg2)})");
+        }
+
         [Event(ExitEventId, Level = EventLevel.Informational, Keywords = Keywords.EnterExit)]
         private void Exit(string thisOrContextObject, string memberName, string result) =>
             WriteEvent(ExitEventId, thisOrContextObject, memberName ?? MissingMember, result);
-        #endregion
+
+        #endregion Exit
 
         #region Info
+
+#if !NET451
+
         /// <summary>Logs an information message.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="formattableString">The message to be logged.</param>
@@ -160,6 +198,8 @@ namespace Microsoft.Azure.Devices.Shared
             DebugValidateArg(formattableString);
             if (IsEnabled) Log.Info(IdOf(thisOrContextObject), memberName, formattableString != null ? Format(formattableString) : NoParameters);
         }
+
+#endif
 
         /// <summary>Logs an information message.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
@@ -176,9 +216,13 @@ namespace Microsoft.Azure.Devices.Shared
         [Event(InfoEventId, Level = EventLevel.Informational, Keywords = Keywords.Default)]
         private void Info(string thisOrContextObject, string memberName, string message) =>
             WriteEvent(InfoEventId, thisOrContextObject, memberName ?? MissingMember, message);
-        #endregion
+
+        #endregion Info
 
         #region Error
+
+#if !NET451
+
         /// <summary>Logs an error message.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="formattableString">The message to be logged.</param>
@@ -190,6 +234,8 @@ namespace Microsoft.Azure.Devices.Shared
             DebugValidateArg(formattableString);
             if (IsEnabled) Log.ErrorMessage(IdOf(thisOrContextObject), memberName, Format(formattableString));
         }
+
+#endif
 
         /// <summary>Logs an error message.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
@@ -206,9 +252,13 @@ namespace Microsoft.Azure.Devices.Shared
         [Event(ErrorEventId, Level = EventLevel.Warning, Keywords = Keywords.Default)]
         private void ErrorMessage(string thisOrContextObject, string memberName, string message) =>
             WriteEvent(ErrorEventId, thisOrContextObject, memberName ?? MissingMember, message);
-        #endregion
+
+        #endregion Error
 
         #region Fail
+
+#if !NET451
+
         /// <summary>Logs a fatal error and raises an assert.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="formattableString">The message to be logged.</param>
@@ -222,6 +272,8 @@ namespace Microsoft.Azure.Devices.Shared
             if (IsEnabled) Log.CriticalFailure(IdOf(thisOrContextObject), memberName, Format(formattableString));
             Debug.Fail(Format(formattableString), $"{IdOf(thisOrContextObject)}.{memberName}");
         }
+
+#endif
 
         /// <summary>Logs a fatal error and raises an assert.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
@@ -240,9 +292,11 @@ namespace Microsoft.Azure.Devices.Shared
         [Event(CriticalFailureEventId, Level = EventLevel.Critical, Keywords = Keywords.Debug)]
         private void CriticalFailure(string thisOrContextObject, string memberName, string message) =>
             WriteEvent(CriticalFailureEventId, thisOrContextObject, memberName ?? MissingMember, message);
-        #endregion
+
+        #endregion Fail
 
         #region DumpBuffer
+
         /// <summary>Logs the contents of a buffer.</summary>
         /// <param name="thisOrContextObject">`this`, or another object that serves to provide context for the operation.</param>
         /// <param name="buffer">The buffer to be logged.</param>
@@ -294,6 +348,7 @@ namespace Microsoft.Azure.Devices.Shared
             Debug.Assert(bufferPtr != IntPtr.Zero);
             Debug.Assert(count >= 0);
 
+#if !NET451
             if (IsEnabled)
             {
                 var buffer = new byte[Math.Min(count, MaxDumpSize)];
@@ -303,14 +358,17 @@ namespace Microsoft.Azure.Devices.Shared
                 }
                 Log.DumpBuffer(IdOf(thisOrContextObject), memberName, buffer);
             }
+#endif
         }
 
         [Event(DumpArrayEventId, Level = EventLevel.Verbose, Keywords = Keywords.Debug)]
         private unsafe void DumpBuffer(string thisOrContextObject, string memberName, byte[] buffer) =>
             WriteEvent(DumpArrayEventId, thisOrContextObject, memberName ?? MissingMember, buffer);
-        #endregion
+
+        #endregion DumpBuffer
 
         #region Associate
+
         /// <summary>Logs a relationship between two objects.</summary>
         /// <param name="first">The first object.</param>
         /// <param name="second">The second object.</param>
@@ -340,23 +398,32 @@ namespace Microsoft.Azure.Devices.Shared
         [Event(AssociateEventId, Level = EventLevel.Informational, Keywords = Keywords.Default, Message = "[{2}]<-->[{3}]")]
         private void Associate(string thisOrContextObject, string memberName, string first, string second) =>
             WriteEvent(AssociateEventId, thisOrContextObject, memberName ?? MissingMember, first, second);
-        #endregion
-        #endregion
+
+        #endregion Associate
+
+        #endregion Events
 
         #region Helpers
+
         private static void DebugValidateArg(object arg)
         {
             if (!IsEnabled)
             {
                 Debug.Assert(!(arg is ValueType), $"Should not be passing value type {arg?.GetType()} to logging without IsEnabled check");
+#if !NET451
                 Debug.Assert(!(arg is FormattableString), $"Should not be formatting FormattableString \"{arg}\" if tracing isn't enabled");
+#endif
             }
         }
+
+#if !NET451
 
         private static void DebugValidateArg(FormattableString arg)
         {
             Debug.Assert(IsEnabled || arg == null, $"Should not be formatting FormattableString \"{arg}\" if tracing isn't enabled");
         }
+
+#endif
 
         public static new bool IsEnabled => Log.IsEnabled();
 
@@ -422,6 +489,8 @@ namespace Microsoft.Azure.Devices.Shared
             return value;
         }
 
+#if !NET451
+
         [NonEvent]
         private static string Format(FormattableString s)
         {
@@ -442,8 +511,11 @@ namespace Microsoft.Azure.Devices.Shared
             }
         }
 
+#endif
+
         static partial void AdditionalCustomizedToString<T>(T value, ref string result);
-        #endregion
+
+        #endregion Helpers
 
         #region Custom WriteEvent overloads
 
@@ -489,7 +561,11 @@ namespace Microsoft.Azure.Devices.Shared
             {
                 if (arg1 == null) arg1 = "";
                 if (arg2 == null) arg2 = "";
+#if !NET451
                 if (arg3 == null) arg3 = Array.Empty<byte>();
+#else
+                if (arg3 == null) arg3 = new byte[0];
+#endif
 
                 fixed (char* arg1Ptr = arg1)
                 fixed (char* arg2Ptr = arg2)
@@ -633,6 +709,7 @@ namespace Microsoft.Azure.Devices.Shared
                 }
             }
         }
-        #endregion
-	}
+
+        #endregion Custom WriteEvent overloads
+    }
 }

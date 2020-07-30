@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class X509CertificateInfoTests
     {
         private const string SUBJECT_NAME = "CN=ROOT_00000000-0000-0000-0000-000000000000, OU=Azure IoT, O=MSFT, C=US";
@@ -43,66 +44,8 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
             return json;
         }
 
-        /* SRS_X509_CERTIFICATE_INFO_21_001: [The X509CertificateInfo shall provide means to deserialization.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidSubjectName()
-        {
-            foreach (string  failStr in FAIL_STRINGS)
-            {
-                // arrange
-                string json = makeJson(failStr, SHA1THUMBPRINT, SHA256THUMBPRINT, ISSUER_NAME, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, SERIAL_NUMBER, VERSION);
-
-                // act - assert
-                TestAssert.Throws<ProvisioningServiceClientException>(() => Newtonsoft.Json.JsonConvert.DeserializeObject<X509CertificateInfo>(json));
-            }
-        }
-
-        [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidSha1Thumbprint()
-        {
-            foreach (string failStr in FAIL_STRINGS)
-            {
-                // arrange
-                string json = makeJson(SUBJECT_NAME, failStr, SHA256THUMBPRINT, ISSUER_NAME, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, SERIAL_NUMBER, VERSION);
-
-                // act - assert
-                TestAssert.Throws<ProvisioningServiceClientException>(() => Newtonsoft.Json.JsonConvert.DeserializeObject<X509CertificateInfo>(json));
-            }
-        }
-
-        [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidSha256Thumbprint()
-        {
-            foreach (string failStr in FAIL_STRINGS)
-            {
-                // arrange
-                string json = makeJson(SUBJECT_NAME, SHA1THUMBPRINT, failStr, ISSUER_NAME, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, SERIAL_NUMBER, VERSION);
-
-                // act - assert
-                TestAssert.Throws<ProvisioningServiceClientException>(() => Newtonsoft.Json.JsonConvert.DeserializeObject<X509CertificateInfo>(json));
-            }
-        }
-
-        [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidIssuerName()
-        {
-            foreach (string failStr in FAIL_STRINGS)
-            {
-                // arrange
-                string json = makeJson(SUBJECT_NAME, SHA1THUMBPRINT, SHA256THUMBPRINT, failStr, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, SERIAL_NUMBER, VERSION);
-
-                // act - assert
-                TestAssert.Throws<ProvisioningServiceClientException>(() => Newtonsoft.Json.JsonConvert.DeserializeObject<X509CertificateInfo>(json));
-            }
-        }
-
-        [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidNotBeforeUtc()
+        public void X509CertificateInfoThrowsOnInvalidNotBeforeUtc()
         {
             foreach (string failDateTime in FAIL_DATETIME)
             {
@@ -115,8 +58,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidNotAfterUtc()
+        public void X509CertificateInfoThrowsOnInvalidNotAfterUtc()
         {
             foreach (string failDateTime in FAIL_DATETIME)
             {
@@ -129,22 +71,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidSerialNumber()
-        {
-            foreach (string failStr in FAIL_STRINGS)
-            {
-                // arrange
-                string json = makeJson(SUBJECT_NAME, SHA1THUMBPRINT, SHA256THUMBPRINT, ISSUER_NAME, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, failStr, VERSION);
-
-                // act - assert
-                TestAssert.Throws<ProvisioningServiceClientException>(() => Newtonsoft.Json.JsonConvert.DeserializeObject<X509CertificateInfo>(json));
-            }
-        }
-
-        [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_ThrowsOnInvalidVersion()
+        public void X509CertificateInfoThrowsOnInvalidVersion()
         {
             // arrange
             string json =
@@ -163,8 +90,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateInfo_SucceedOnDeserialization()
+        public void X509CertificateInfoSucceedOnDeserialization()
         {
             // arrange
             string json = makeJson(SUBJECT_NAME, SHA1THUMBPRINT, SHA256THUMBPRINT, ISSUER_NAME, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, SERIAL_NUMBER, VERSION);

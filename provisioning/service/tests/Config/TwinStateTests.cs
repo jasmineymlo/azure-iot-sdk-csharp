@@ -9,6 +9,7 @@ using Microsoft.Azure.Devices.Shared;
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class TwinStateTests
     {
         private TwinCollection SampleTags = new TwinCollection
@@ -65,8 +66,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_TWIN_STATE_21_002: [If the _properties is null, the get.DesiredProperties shall return null.] */
         /* SRS_TWIN_STATE_21_004: [If the value is null, the set.DesiredProperties shall set _properties as null.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnNull()
+        public void TwinStateSucceedOnNull()
         {
             // arrange
             TwinCollection tags = null;
@@ -81,8 +81,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnTagsWitoutDesiredProperties()
+        public void TwinStateSucceedOnTagsWitoutDesiredProperties()
         {
             // arrange
             TwinCollection tags = SampleTags;
@@ -100,8 +99,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_TWIN_STATE_21_005: [The set.DesiredProperties shall convert the provided value in a 
                                     TwinPropertyes.Desired and store it as _properties.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnDesiredPropertiesWitoutTags()
+        public void TwinStateSucceedOnDesiredPropertiesWitoutTags()
         {
             // arrange
             TwinCollection tags = null;
@@ -116,8 +114,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnDesiredPropertiesAndTags()
+        public void TwinStateSucceedOnDesiredPropertiesAndTags()
         {
             // arrange
             TwinCollection tags = SampleTags;
@@ -132,8 +129,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnTagsToJson()
+        public void TwinStateSucceedOnTagsToJson()
         {
             // arrange
             TwinCollection tags = SampleTags;
@@ -148,8 +144,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnDesiredPropertiesToJson()
+        public void TwinStateSucceedOnDesiredPropertiesToJson()
         {
             // arrange
             TwinCollection tags = null;
@@ -164,8 +159,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnToJson()
+        public void TwinStateSucceedOnToJson()
         {
             // arrange
             TwinCollection tags = SampleTags;
@@ -180,8 +174,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void TwinState_SucceedOnFromJson()
+        public void TwinStateSucceedOnFromJson()
         {
             // arrange
             TwinCollection tags = SampleTags;

@@ -2,14 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class X509CertificateWithInfoTests
     {
         private const string SUBJECT_NAME = "CN=ROOT_00000000-0000-0000-0000-000000000000, OU=Azure IoT, O=MSFT, C=US";
@@ -69,15 +69,14 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
             return json;
         }
 
-
         /* SRS_X509_CERTIFICATE_WITH_INFO_21_001: [The public constructor shall throws ArgumentException if the provided certificate is null or InvalidOperationException if it is invalid.] */
+
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateWithInfo_Constructor_ThrowsOnNullX509Certificate()
+        public void X509CertificateWithInfoConstructorThrowsOnNullX509Certificate()
         {
             // arrange
             X509Certificate2 certificateNull = null;
-            X509Certificate2 certificateEmpty = new X509Certificate2();
+            var certificateEmpty = new X509Certificate2();
             string certificateString = null;
             string certificateStringEmpty = "";
             string certificateStringInvalid =
@@ -94,18 +93,20 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
                 "-----END CERTIFICATE-----\n";
 
             // act - assert
+#pragma warning disable CA1806 // Do not ignore method results
             TestAssert.Throws<ArgumentException>(() => new X509CertificateWithInfo(certificateNull));
             TestAssert.Throws<CryptographicException>(() => new X509CertificateWithInfo(certificateEmpty));
             TestAssert.Throws<ArgumentException>(() => new X509CertificateWithInfo(certificateString));
             TestAssert.Throws<CryptographicException>(() => new X509CertificateWithInfo(certificateStringEmpty));
             TestAssert.Throws<CryptographicException>(() => new X509CertificateWithInfo(certificateStringInvalid));
+#pragma warning restore CA1806 // Do not ignore method results
         }
 
-        /* SRS_X509_CERTIFICATE_WITH_INFO_21_002: [The public constructor shall store the provided certificate as Base64 string.] */
-        /* SRS_X509_CERTIFICATE_WITH_INFO_21_003: [The public constructor shall set the Info to null.] */
+        // SRS_X509_CERTIFICATE_WITH_INFO_21_002: [The public constructor shall store the provided certificate as Base64 string.]
+        // SRS_X509_CERTIFICATE_WITH_INFO_21_003: [The public constructor shall set the Info to null.]
+
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateWithInfo_Constructor_SucceedOnValidX509Certificate()
+        public void X509CertificateWithInfoConstructorSucceedOnValidX509Certificate()
         {
             // arrange
             X509Certificate2 certificate = new X509Certificate2(System.Text.Encoding.ASCII.GetBytes(PUBLIC_KEY_CERTIFICATE));
@@ -119,8 +120,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateWithInfo_Constructor_SucceedOnValidX509CertificateString()
+        public void X509CertificateWithInfoConstructorSucceedOnValidX509CertificateString()
         {
             // arrange
             string certificate = PUBLIC_KEY_CERTIFICATE;
@@ -135,9 +135,9 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 
         /* SRS_X509_CERTIFICATE_WITH_INFO_21_005: [The constructor for JSON shall store the provided Info.] */
         /* SRS_X509_CERTIFICATE_WITH_INFO_21_006: [The constructor for JSON shall store the provided certificate as X509Certificate2.] */
+
         [TestMethod]
-        [TestCategory("DevService")]
-        public void X509CertificateWithInfo_SucceedOnJsonWithInfo()
+        public void X509CertificateWithInfoSucceedOnJsonWithInfo()
         {
             // arrange
             string json = makeJson(SUBJECT_NAME, SHA1THUMBPRINT, SHA256THUMBPRINT, ISSUER_NAME, NOT_BEFORE_UTC_STRING, NOT_AFTER_UTC_STRING, SERIAL_NUMBER, VERSION);

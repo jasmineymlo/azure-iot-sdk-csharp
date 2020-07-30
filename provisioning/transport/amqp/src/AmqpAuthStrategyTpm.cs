@@ -7,6 +7,8 @@ using Microsoft.Azure.Devices.Shared;
 using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.Devices.Provisioning.Client.Transport.Models;
+using System.Net;
+using System.Net.Security;
 
 namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
 {
@@ -35,9 +37,9 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
             return settings;
         }
 
-        public override Task OpenConnectionAsync(AmqpClientConnection connection, TimeSpan timeout, bool useWebSocket)
+        public override Task OpenConnectionAsync(AmqpClientConnection connection, TimeSpan timeout, bool useWebSocket, IWebProxy proxy, RemoteCertificateValidationCallback remoteCertificateValidationCallback)
         {
-            return connection.OpenAsync(timeout, useWebSocket, null);
+            return connection.OpenAsync(timeout, useWebSocket, null, proxy, remoteCertificateValidationCallback);
         }
 
         public override void SaveCredentials(RegistrationOperationStatus operation)
@@ -51,8 +53,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
                 throw new ProvisioningTransportException(
                     "Authentication key not found.",
                     null,
-                    false,
-                    operation?.OperationId);
+                    false);
             }
 
             byte[] key = Convert.FromBase64String(operation.RegistrationState.Tpm.AuthenticationKey);

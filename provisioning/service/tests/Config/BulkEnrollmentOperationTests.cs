@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class BulkEnrollmentOperationTests
     {
         private static IndividualEnrollment individualEnrollment1 = new IndividualEnrollment("regid1", new TpmAttestation("abc="));
@@ -18,8 +19,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_BULK_OPERATION_21_001: [The toJsonElement shall throw ArgumentException if the provided collection of 
                                         individualEnrollments is null or empty.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperation_ToJson_ThrowsOnInvalidParameters()
+        public void BulkEnrollmentOperationToJsonThrowsOnInvalidParameters()
         {
             // arrange - act - assert
             TestAssert.Throws<ArgumentException>(() => BulkEnrollmentOperation.ToJson(BulkOperationMode.Create, null));
@@ -29,8 +29,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         /* SRS_BULK_OPERATION_21_002: [The toJson shall return a String with the mode and the collection of individualEnrollments 
                                         using a JSON format.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperation_Constructor_Succeed()
+        public void BulkEnrollmentOperationConstructorSucceed()
         {
             // arrange
             string expectedJson =

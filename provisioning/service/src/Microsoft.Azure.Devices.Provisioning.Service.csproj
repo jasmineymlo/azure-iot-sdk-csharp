@@ -1,57 +1,67 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- TODO #176: Enable warnings as errors. -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors> 
-    <!-- TODO #255: Multiple public APIs still missing documentation:
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputPath>.\bin\$(Configuration)</OutputPath>
-    <DocumentationFile>$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile> -->
+    <DocumentationFile>$(OutputPath)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <RootDir>$(MSBuildProjectDirectory)\..\..\..</RootDir>
   </PropertyGroup>
 
   <!-- delay sign the assembly for Release build -->
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <AssemblyOriginatorKeyFile>..\..\..\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' AND '$(AZURE_IOT_DONOTSIGN.ToUpper())' != 'TRUE' ">
+    <AssemblyOriginatorKeyFile>$(RootDir)\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
     <DelaySign>true</DelaySign>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
 
   <PropertyGroup>
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <Version>1.6.3</Version>
     <Title>Microsoft Azure IoT Provisioning Service Client SDK</Title>
+    <IncludeSource>True</IncludeSource>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Authors>Microsoft</Authors>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://github.com/Azure/azure-iot-sdk-csharp/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <Description>Provisioning Service Client SDK for Azure IoT</Description>
-    <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
+    <PackageIcon>nugetIcon.png</PackageIcon>
     <PackageProjectUrl>https://github.com/Azure/azure-iot-sdk-csharp</PackageProjectUrl>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageTags>Microsoft Azure IoT Provisioning Service Client .NET HTTP</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\common\src\service\CommonResources.cs" Link="Common\CommonResources.cs" />
-    <Compile Include="..\..\..\common\src\service\EventTraceActivity.cs" Link="Common\EventTraceActivity.cs" />
-    <Compile Include="..\..\..\common\src\service\Resources.Designer.cs" Link="Common\Resources.Designer.cs" />
-    <Compile Include="..\..\..\common\src\service\StringValidationHelper.cs" Link="Common\StringValidationHelper.cs" />
-    <Compile Include="..\..\..\common\src\service\Utils.cs" Link="Common\Utils.cs" />
+    <None Include="$(RootDir)\LICENSE" Pack="true" PackagePath="" />
+    <None Include="$(RootDir)\shared\icons\nugetIcon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <common>$(RootDir)\common\src</common>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(common)\service\CommonResources.cs" Link="Common\CommonResources.cs" />
+    <Compile Include="$(common)\service\EventTraceActivity.cs" Link="Common\EventTraceActivity.cs" />
+    <Compile Include="$(common)\service\Resources.Designer.cs" Link="Common\Resources.Designer.cs" />
+    <Compile Include="$(common)\service\StringValidationHelper.cs" Link="Common\StringValidationHelper.cs" />
+    <Compile Include="$(common)\service\Utils.cs" Link="Common\Utils.cs" />
+    <Compile Include="$(Common)\DefaultWebProxySettings.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-
-    <!-- FXCop TODO: #176
-    <PackageReference Condition=" '$(Configuration)' == 'Debug' " Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.6.0-beta2" />
-    -->
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Condition=" '$(Configuration)' == 'Debug' " Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\shared\Microsoft.Azure.Devices.Shared.NetStandard\Microsoft.Azure.Devices.Shared.NetStandard.csproj">
-      <Project>{91dfb837-d8a3-4f54-ae0d-45c95acd0c2a}</Project>
-      <Name>Microsoft.Azure.Devices.Shared.NetStandard</Name>
-    </ProjectReference>
+    <ProjectReference Include="$(RootDir)\shared\src\Microsoft.Azure.Devices.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -69,5 +79,4 @@
       <CustomToolNamespace>Microsoft.Azure.Devices</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
-
 </Project>

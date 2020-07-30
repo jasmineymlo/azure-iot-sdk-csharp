@@ -8,42 +8,16 @@ using Newtonsoft.Json;
 namespace Microsoft.Azure.Devices.Provisioning.Service.Test
 {
     [TestClass]
+    [TestCategory("Unit")]
     public class BulkEnrollmentOperationErrorTests
     {
         private const string SampleRegistrationId = "valid-registration-id";
         private const int SampleErrorCode = 400;
         private const string SampleErrorStatus = "Bad message format exception.";
 
-        /* SRS_BULK_ENROLLMENT_OPERATION_ERRO_21_001: [The BulkEnrollmentOperationError shall throws JsonSerializationException if the 
-                                            provided registrationId is null, empty, or invalid.] */
-        [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperationError_Constructor_ThrowsOnInvalidParameters()
-        {
-            // arrange
-            string nonRegistrationId = 
-                "{" +
-                $"  \"errorCode\": {SampleErrorCode}, \"errorStatus\": \"{SampleErrorStatus}\"" +
-                "}";
-            string emptyRegistrationId = 
-                "{" +
-                $"  \"registrationId\":\"\", \"errorCode\": {SampleErrorCode}, \"errorStatus\": \"{SampleErrorStatus}\"" +
-                "}";
-            string invalidRegistrationId = 
-                "{" +
-                $"  \"registrationId\":\"valid Registration Id\", \"errorCode\":{SampleErrorCode}, \"errorStatus\": \"{SampleErrorStatus}\"" +
-                "}";
-
-            // act - assert
-            TestAssert.Throws<JsonSerializationException>(() => JsonConvert.DeserializeObject<BulkEnrollmentOperationError>(nonRegistrationId));
-            TestAssert.Throws<JsonSerializationException>(() => JsonConvert.DeserializeObject<BulkEnrollmentOperationError>(emptyRegistrationId));
-            TestAssert.Throws<JsonSerializationException>(() => JsonConvert.DeserializeObject<BulkEnrollmentOperationError>(invalidRegistrationId));
-        }
-
         /* SRS_BULK_ENROLLMENT_OPERATION_ERRO_21_002: [The BulkEnrollmentOperationError shall store the provided information.] */
         [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperationError_Constructor_Succeed()
+        public void BulkEnrollmentOperationErrorConstructorSucceed()
         {
             // arrange
             string erroJson = 
@@ -64,8 +38,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Service.Test
         }
 
         [TestMethod]
-        [TestCategory("DevService")]
-        public void BulkEnrollmentOperationError_Constructor_SucceedOnOnlyRegistrationId()
+        public void BulkEnrollmentOperationErrorConstructorSucceedOnOnlyRegistrationId()
         {
             // arrange
             string erroJson =

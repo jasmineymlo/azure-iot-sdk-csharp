@@ -4,6 +4,8 @@
 using Microsoft.Azure.Devices.Provisioning.Client.Transport.Models;
 using Microsoft.Azure.Devices.Shared;
 using System;
+using System.Net;
+using System.Net.Http;
 
 namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
 {
@@ -16,7 +18,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
             _security = security;
         }
 
-        public override DeviceProvisioningServiceRuntimeClient CreateClient(Uri uri)
+        public override DeviceProvisioningServiceRuntimeClient CreateClient(Uri uri, HttpClientHandler httpClientHandler)
         {
             var serviceCredentials = new TpmCredentials();
             var tpmDelegatingHandler = new TpmDelegatingHandler(_security);
@@ -25,6 +27,7 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
             var dpsClient = new DeviceProvisioningServiceRuntimeClient(
                 uri,
                 serviceCredentials,
+                httpClientHandler,
                 tpmDelegatingHandler,
                 apiVersionDelegatingHandler);
 
@@ -51,10 +54,9 @@ namespace Microsoft.Azure.Devices.Provisioning.Client.Transport
                     $"Authentication key not found. OperationId=${operation?.OperationId}");
 
                 throw new ProvisioningTransportException(
-                    "Authentication key not found.", 
+                    "Authentication key not found.",
                     null,
-                    false, 
-                    operation?.OperationId);
+                    false);
             }
 
             byte[] key = Convert.FromBase64String(operation.RegistrationState.Tpm.AuthenticationKey);
